@@ -1,56 +1,85 @@
-import React, { useRef } from 'react'
-import { useState } from 'react';
-import { useEffect } from 'react';
-import {Link,useSubmit} from 'react-router-dom'
+import React, { useRef, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const Home = () => {
-const [allrecipes, setallrecipes] = useState([]);
-const [searchitem, setsearchitem] = useState('burger');
+  const [allrecipes, setAllrecipes] = useState([]);
+  const [searchitem, setSearchitem] = useState('');
+  const searchref = useRef();
 
-	const getdata=async()=>{
-		let res=await fetch(`https://api.edamam.com/search?q=${searchitem}&app_id=8a01517b&app_key=
-582ba5fc9a6ecd9ac73033c017f7eb49`)
-let data=await res.json();
-console.log(data.hits)
-setallrecipes(data.hits)
-	}
-	
-	useEffect(()=>{
-		getdata()
-	},[searchitem])
-	let searchref=useRef();
-	// console.log(searchref)
+  const getdata = async () => {
+    let res;
+    if (searchitem === '' || searchitem.trim() === '') {
+      // Default → show 20 recipes
+      res = await fetch(`https://dummyjson.com/recipes?limit=20`);
+    } else {
+      // When searching
+      res = await fetch(`https://dummyjson.com/recipes/search?q=${searchitem}`);
+    }
+    let data = await res.json();
+    console.log(data.recipes);
+    setAllrecipes(data.recipes);
+  };
 
-	const handlesearch=(e)=>{
-		e.preventDefault()
-		let value=searchref.current.value
-		console.log(value)
-		setsearchitem(value)
-	}
+  useEffect(() => {
+    getdata();
+  }, [searchitem]);
 
-	return (
-	<div>
-		<form action="" className='w-max m-auto'>
-			<input ref={searchref} className='px-3 py-4 rounded-md border-2 border-black' type="text" placeholder='search a recipe' />
-			<button onClick={handlesearch} className='px-3 py-2 rounded-md bg-blue-400 hover:bg-blue-900'>
-				Search
-			</button>
+  const handlesearch = (e) => {
+    e.preventDefault();
+    let value = searchref.current.value.trim();
+    console.log(value);
+    setSearchitem(value);
+  };
 
-		</form>
-		<div className='grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2'>
-		{
-		allrecipes.map((ele,i)=>{
-			return <div className='w-full border border-gray-200  flex flex-col gap-5 items-center p-3 rounded-lg'>
-				<img src={ele.recipe.image} alt="" />
-				<h1>{ele.recipe.label}</h1>
-				<Link to={'/view'} state={ele.recipe} className='bg-green-700 px-4 py-2 rounded-md  hover:bg-green-200 text-white'>view recipe</Link>
-			</div>
-		})
-	} 
-		</div>
+  return (
+    <div>
+      {/* Search Bar */}
+      <form onSubmit={handlesearch} className="w-max m-auto my-5 flex gap-3">
+        <input
+          ref={searchref}
+          className="px-3 py-2 rounded-md border-2 border-black"
+          type="text"
+          placeholder="Search a recipe"
+        />
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-md bg-blue-400 hover:bg-blue-900 text-white"
+        >
+          Search
+        </button>
+      </form>
 
-	</div>
-  )
-}
+      {/* Recipes Grid */}
+      <div className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 gap-5 p-5">
+        {allrecipes?.length > 0 ? (
+          allrecipes.map((ele, i) => (
+            <div
+              key={i}
+              className="w-full border border-gray-200 flex flex-col gap-3 items-center p-3 rounded-lg shadow-md"
+            >
+              <img
+                src={ele.image}
+                alt={ele.name}
+                className="w-40 h-40 object-cover rounded-md"
+              />
+              <h1 className="font-semibold text-center">{ele.name}</h1>
+              <Link
+                to="/view"
+                state={ele}
+                className="bg-green-700 px-4 py-2 rounded-md hover:bg-green-500 text-white"
+              >
+                View Recipe
+              </Link>
+            </div>
+          ))
+        ) : (
+          <h2 className="col-span-full text-center text-lg text-gray-500">
+            No recipes found
+          </h2>
+        )}
+      </div>
+    </div>
+  );
+};
 
-export default Home
+export default Home;
